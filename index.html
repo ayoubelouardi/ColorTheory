@@ -24,12 +24,23 @@
         <p class="text-center mb-8">Upload a frame from your video to get color suggestions for your editing</p>
         
         <div class="mb-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-md">
-            <div class="flex flex-col items-center justify-center">
+            <div class="flex flex-col items-center justify-center" id="drop-zone">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Supported formats:</span>
+                    <div class="relative group">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div class="absolute hidden group-hover:block bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 p-3 rounded-lg shadow-lg z-10">
+                            .jpg, .jpeg, .png, .gif, .webp, .bmp, .svg, .tiff, .tif
+                        </div>
+                    </div>
+                </div>
                 <label for="image-upload" class="w-full max-w-md flex flex-col items-center px-4 py-6 bg-white dark:bg-gray-700 text-primary rounded-lg shadow-lg tracking-wide border border-primary cursor-pointer hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors duration-200">
                     <svg class="w-8 h-8" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                         <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
                     </svg>
-                    <span class="mt-2 text-base">Select an image</span>
+                    <span class="mt-2 text-base">Select an image or drag & drop here</span>
                     <input id="image-upload" type="file" class="hidden" accept="image/*" />
                 </label>
                 <div id="color-enhancement-controls" class="hidden w-full max-w-md mt-6 p-4 bg-white dark:bg-gray-700 rounded-lg shadow-md">
@@ -290,6 +301,7 @@
         const contrastValue = document.getElementById('contrast-value');
         const autoEnhanceCheckbox = document.getElementById('auto-enhance-checkbox');
         const resetEnhancementsButton = document.getElementById('reset-enhancements');
+        const dropZone = document.getElementById('drop-zone');
 
         // Color enhancement settings
         let colorEnhancementSettings = {
@@ -405,11 +417,32 @@
                 if (results.classList.contains('hidden')) return;
                 updateColorHarmonies();
             });
+
+            // Add drag & drop event listeners
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-primary', 'border-2');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-primary', 'border-2');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-primary', 'border-2');
+                
+                const file = e.dataTransfer.files[0];
+                if (file && (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|svg|tiff?)$/i.test(file.name))) {
+                    handleFileUpload(file);
+                } else {
+                    alert('Please upload a valid image file.');
+                }
+            });
         });
 
-        // Handle image upload
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
+        // Modify handleImageUpload to handle both file input and drag & drop
+        function handleFileUpload(file) {
             if (!file) return;
             
             // Show loading indicator
@@ -437,6 +470,12 @@
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        // Update handleImageUpload to use handleFileUpload
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            handleFileUpload(file);
         }
 
         // Analyze the image to get colors
